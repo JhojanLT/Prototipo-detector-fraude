@@ -1,0 +1,102 @@
+@use "../../styles/variables" as *;
+
+.processing-view {
+  @include card;
+  padding: 2.5rem 2rem;
+  animation: fadeInUp 0.4s ease;
+
+  &__spinner-wrap {
+    @include flex-center;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  &__spinner {
+    width: 56px;
+    height: 56px;
+    border: 3px solid $color-border;
+    border-top-color: $color-primary;
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+  }
+
+  &__percent {
+    font-family: $font-display;
+    font-size: 0.95rem;
+    color: $color-text-muted;
+    letter-spacing: 0.02em;
+  }
+
+  &__modules {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__module {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    border-radius: $radius-md;
+    border: 1px solid transparent;
+    opacity: 0.45;
+    transition: all $transition-base;
+
+    &--active {
+      opacity: 1;
+      background: $color-primary-soft;
+      border-color: rgba(37, 99, 235, 0.3);
+
+      .processing-view__module-indicator {
+        background: $color-primary;
+        color: white;
+        animation: pulse 1.2s ease infinite;
+      }
+    }
+
+    &--done {
+      opacity: 1;
+
+      .processing-view__module-indicator {
+        background: $color-riesgo-bajo;
+        color: white;
+      }
+    }
+  }
+
+  &__module-indicator {
+    @include flex-center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: $color-surface-elevated;
+    color: $color-text-muted;
+    font-family: $font-mono;
+    font-size: 0.9rem;
+    font-weight: 600;
+    flex-shrink: 0;
+
+    svg {
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  &__module-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__module-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: $color-text;
+  }
+
+  &__module-desc {
+    font-size: 0.8rem;
+    color: $color-text-muted;
+  }
+}

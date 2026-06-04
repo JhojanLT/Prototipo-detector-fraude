@@ -1,0 +1,224 @@
+@use "../../styles/variables" as *;
+
+.level-alert {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  animation: fadeInUp 0.5s ease;
+
+  &__hero {
+    @include card;
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 2rem;
+    border-color: rgba(239, 68, 68, 0.4);
+    background: linear-gradient(135deg, $color-surface, $color-riesgo-alto-soft);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 5px;
+      height: 100%;
+      background: $color-riesgo-alto;
+    }
+
+    @media (max-width: 560px) {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding: 1.5rem 1.25rem;
+    }
+  }
+
+  &__icon {
+    @include flex-center;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: $color-riesgo-alto-soft;
+    flex-shrink: 0;
+
+    svg {
+      width: 30px;
+      height: 30px;
+      color: $color-riesgo-alto;
+    }
+  }
+
+  &__label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $color-riesgo-alto;
+    font-weight: 600;
+  }
+
+  &__title {
+    font-size: 1.4rem;
+    color: $color-text;
+    margin: 0.3rem 0 0.75rem;
+    letter-spacing: -0.01em;
+
+    @media (max-width: 560px) {
+      font-size: 1.2rem;
+    }
+  }
+
+  &__recommendation {
+    font-size: 0.92rem;
+    color: $color-text;
+    line-height: 1.6;
+  }
+
+  &__detail {
+    @include card;
+    padding: 1.5rem;
+  }
+
+  &__detail-title {
+    font-size: 0.95rem;
+    color: $color-text;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid $color-border;
+  }
+
+  &__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    font-size: 0.88rem;
+    border-bottom: 1px dashed rgba(46, 58, 77, 0.5);
+    gap: 1rem;
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+  }
+
+  &__row-label {
+    color: $color-text-muted;
+    flex-shrink: 0;
+  }
+
+  &__row-value {
+    color: $color-text;
+    font-weight: 500;
+    text-align: right;
+
+    &--alert {
+      color: $color-riesgo-alto;
+    }
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 0.2rem 0.6rem;
+    border-radius: $radius-sm;
+    font-size: 0.8rem;
+
+    &--alta {
+      background: $color-riesgo-alto-soft;
+      color: $color-riesgo-alto;
+    }
+    &--media {
+      background: $color-riesgo-medio-soft;
+      color: $color-riesgo-medio;
+    }
+    &--baja {
+      background: rgba(139, 152, 169, 0.15);
+      color: $color-text-muted;
+    }
+  }
+
+  &__reason {
+    margin-top: 1rem;
+    padding-top: 0.875rem;
+    border-top: 1px solid $color-border;
+  }
+
+  &__reason-label {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $color-text-faint;
+    display: block;
+    margin-bottom: 0.4rem;
+  }
+
+  &__reason-text {
+    font-size: 0.88rem;
+    color: $color-text-muted;
+    line-height: 1.6;
+  }
+
+  &__legal {
+    @include card;
+    padding: 1.25rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    border-color: rgba(37, 99, 235, 0.2);
+    background: $color-primary-soft;
+
+    svg {
+      width: 18px;
+      height: 18px;
+      color: $color-primary;
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+    }
+
+    p {
+      font-size: 0.84rem;
+      color: $color-text-muted;
+      line-height: 1.6;
+
+      strong {
+        color: $color-text;
+      }
+    }
+  }
+
+  &__low-confidence {
+    color: $color-riesgo-medio;
+    font-style: italic;
+  }
+
+  &__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  &__time {
+    font-family: $font-mono;
+    font-size: 0.82rem;
+    color: $color-text-faint;
+  }
+
+  &__reset {
+    padding: 0.7rem 1.4rem;
+    border-radius: $radius-md;
+    border: none;
+    background: $color-primary;
+    color: white;
+    font-family: $font-body;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background $transition-fast;
+
+    &:hover {
+      background: $color-primary-hover;
+    }
+  }
+}

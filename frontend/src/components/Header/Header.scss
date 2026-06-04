@@ -1,0 +1,77 @@
+@use "../../styles/variables" as *;
+
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 2rem;
+  border-bottom: 1px solid $color-border;
+  background: rgba(26, 34, 48, 0.6);
+  backdrop-filter: blur(12px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+  }
+
+  &__logo {
+    @include flex-center;
+    width: 44px;
+    height: 44px;
+    border-radius: $radius-md;
+    background: linear-gradient(135deg, $color-primary, $color-primary-hover);
+    box-shadow: 0 4px 16px rgba(37, 99, 235, 0.35);
+
+    svg {
+      width: 24px;
+      height: 24px;
+      color: white;
+    }
+  }
+
+  &__title {
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+    color: $color-text;
+  }
+
+  &__subtitle {
+    font-size: 0.8rem;
+    color: $color-text-muted;
+    margin-top: 0.1rem;
+  }
+
+  &__institution {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+  }
+
+  &__institution-name {
+    font-family: $font-display;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: $color-text;
+  }
+
+  &__institution-campus {
+    font-size: 0.78rem;
+    color: $color-text-muted;
+  }
+
+  @media (max-width: 640px) {
+    padding: 1rem;
+
+    &__subtitle {
+      display: none;
+    }
+    &__institution-campus {
+      display: none;
+    }
+  }
+}
