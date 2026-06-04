@@ -11,3 +11,7 @@ backend/.env
 
 # Sistema
 .DS_Store
+
+
+.venv/
+venv/
