@@ -5,6 +5,7 @@ interface LevelAlertProps {
   nivel: Modulo0NivelAcademico;
   recomendacion: string;
   tiempoTotal: number;
+  bloqueadoPorTipo?: boolean;
   onReset: () => void;
 }
 
@@ -14,7 +15,7 @@ const CONFIANZA_LABEL = {
   baja: "Baja — verificar manualmente",
 };
 
-export default function LevelAlert({ nivel, recomendacion, tiempoTotal, onReset }: LevelAlertProps) {
+export default function LevelAlert({ nivel, recomendacion, tiempoTotal, bloqueadoPorTipo, onReset }: LevelAlertProps) {
   return (
     <div className="level-alert">
       {/* Hero de bloqueo */}
@@ -27,31 +28,39 @@ export default function LevelAlert({ nivel, recomendacion, tiempoTotal, onReset 
         </div>
         <div className="level-alert__hero-content">
           <span className="level-alert__label">Análisis detenido</span>
-          <h2 className="level-alert__title">Requisito de nivel académico no cumplido</h2>
+          <h2 className="level-alert__title">
+            {bloqueadoPorTipo
+              ? "El documento no es un diploma académico"
+              : "Requisito de nivel académico no cumplido"}
+          </h2>
           <p className="level-alert__recommendation">{recomendacion}</p>
         </div>
       </div>
 
-      {/* Detalle del nivel detectado */}
+      {/* Detalle del análisis */}
       <div className="level-alert__detail">
-        <h3 className="level-alert__detail-title">Detalle del análisis de nivel</h3>
+        <h3 className="level-alert__detail-title">Detalle del análisis</h3>
 
-        <div className="level-alert__row">
-          <span className="level-alert__row-label">Nivel detectado</span>
-          <span className="level-alert__row-value level-alert__row-value--alert">
-            {nivel.nivel_detectado}
-          </span>
-        </div>
+        {!bloqueadoPorTipo && (
+          <>
+            <div className="level-alert__row">
+              <span className="level-alert__row-label">Nivel detectado</span>
+              <span className="level-alert__row-value level-alert__row-value--alert">
+                {nivel.nivel_detectado}
+              </span>
+            </div>
 
-        <div className="level-alert__row">
-          <span className="level-alert__row-label">Título identificado</span>
-          <span className="level-alert__row-value">{nivel.titulo_detectado}</span>
-        </div>
+            <div className="level-alert__row">
+              <span className="level-alert__row-label">Título identificado</span>
+              <span className="level-alert__row-value">{nivel.titulo_detectado}</span>
+            </div>
 
-        <div className="level-alert__row">
-          <span className="level-alert__row-label">Programa identificado</span>
-          <span className="level-alert__row-value">{nivel.programa_detectado}</span>
-        </div>
+            <div className="level-alert__row">
+              <span className="level-alert__row-label">Programa identificado</span>
+              <span className="level-alert__row-value">{nivel.programa_detectado}</span>
+            </div>
+          </>
+        )}
 
         <div className="level-alert__row">
           <span className="level-alert__row-label">Confianza del análisis</span>
@@ -66,7 +75,7 @@ export default function LevelAlert({ nivel, recomendacion, tiempoTotal, onReset 
         </div>
       </div>
 
-      {/* Nota legal */}
+      {/* Nota informativa */}
       <div className="level-alert__legal">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <circle cx="12" cy="12" r="10" />
@@ -74,15 +83,30 @@ export default function LevelAlert({ nivel, recomendacion, tiempoTotal, onReset 
           <line x1="12" y1="16" x2="12.01" y2="16" />
         </svg>
         <p>
-          Según la <strong>Ley 30 de 1992</strong> y el <strong>Decreto 1330 de 2019</strong>,
-          el acceso a programas de posgrado en Colombia requiere título de pregrado universitario.
-          Títulos de nivel tecnológico o técnico profesional no cumplen este requisito para
-          especializaciones universitarias, maestrías ni doctorados.
-          {nivel.confianza === "baja" && (
-            <span className="level-alert__low-confidence">
-              {" "}La confianza del análisis es baja por limitaciones del OCR.
-              Se recomienda verificar manualmente el nivel del título.
-            </span>
+          {bloqueadoPorTipo ? (
+            <>
+              Este sistema está diseñado exclusivamente para analizar <strong>diplomas o títulos académicos</strong>.
+              El documento enviado no fue reconocido como tal. Suba la imagen del diploma o título académico del aspirante.
+              {nivel.confianza === "baja" && (
+                <span className="level-alert__low-confidence">
+                  {" "}La confianza del análisis es baja. Si el documento sí es un diploma, puede que la calidad
+                  de la imagen sea insuficiente para el OCR. Intente con una imagen de mayor resolución.
+                </span>
+              )}
+            </>
+          ) : (
+            <>
+              Según la <strong>Ley 30 de 1992</strong> y el <strong>Decreto 1330 de 2019</strong>,
+              el acceso a programas de posgrado en Colombia requiere título de pregrado universitario.
+              Títulos de nivel tecnológico o técnico profesional no cumplen este requisito para
+              especializaciones universitarias, maestrías ni doctorados.
+              {nivel.confianza === "baja" && (
+                <span className="level-alert__low-confidence">
+                  {" "}La confianza del análisis es baja por limitaciones del OCR.
+                  Se recomienda verificar manualmente el nivel del título.
+                </span>
+              )}
+            </>
           )}
         </p>
       </div>
@@ -92,7 +116,7 @@ export default function LevelAlert({ nivel, recomendacion, tiempoTotal, onReset 
           Tiempo de análisis: {(tiempoTotal / 1000).toFixed(2)} s
         </span>
         <button className="level-alert__reset" onClick={onReset}>
-          Analizar otro título
+          Analizar otro documento
         </button>
       </div>
     </div>

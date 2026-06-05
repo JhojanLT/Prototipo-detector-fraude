@@ -21,7 +21,9 @@ export default function App() {
     try {
       const res = await analizarTitulo(archivo);
       setResultado(res);
-      if (res.estado === "bloqueado_por_nivel") {
+      if (res.estado === "bloqueado_por_tipo") {
+        setEstado("bloqueado_por_tipo");
+      } else if (res.estado === "bloqueado_por_nivel") {
         setEstado("bloqueado_por_nivel");
       } else {
         setEstado("completado");
@@ -78,11 +80,12 @@ export default function App() {
           ) : estado === "procesando" ? (
             <ProcessingView />
           ) : (
-            resultado && estado === "bloqueado_por_nivel" ? (
+            resultado && (estado === "bloqueado_por_nivel" || estado === "bloqueado_por_tipo") ? (
             <LevelAlert
               nivel={resultado.modulos.modulo_0_nivel_academico!}
               recomendacion={resultado.reporte.recomendacion}
               tiempoTotal={resultado.tiempo_total_ms}
+              bloqueadoPorTipo={estado === "bloqueado_por_tipo"}
               onReset={handleReset}
             />
           ) : (

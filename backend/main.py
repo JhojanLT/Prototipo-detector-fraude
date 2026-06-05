@@ -115,7 +115,29 @@ async def analizar_titulo(archivo: UploadFile = File(...)):
         nivel["tiempo_ms"] = round((time.time() - t0) * 1000, 1)
         resultado["modulos"]["modulo_0_nivel_academico"] = nivel
 
-        # Si no cumple el requisito → detener análisis
+        # Si no es un diploma → detener análisis
+        if not nivel.get("es_diploma", True):
+            resultado["estado"] = "bloqueado_por_tipo"
+            resultado["tiempo_total_ms"] = round((time.time() - tiempo_inicio) * 1000, 1)
+            resultado["reporte"] = {
+                "nivel_riesgo_global": "bloqueado",
+                "puntuacion_confianza": 0,
+                "elementos_verificados": [],
+                "anomalias_detectadas": [
+                    "El documento no corresponde a un diploma o título académico.",
+                ],
+                "recomendacion": (
+                    "DOCUMENTO NO VÁLIDO: El archivo enviado no parece ser un diploma o título académico. "
+                    f"{nivel.get('razon', '')} "
+                    "Solicitar al aspirante que suba la imagen del diploma o título académico correspondiente."
+                ),
+                "requiere_revision_humana": nivel.get("confianza") in ["baja", "media"],
+                "bloqueado_por_nivel": False,
+                "bloqueado_por_tipo": True,
+            }
+            return JSONResponse(content=resultado)
+
+        # Si no cumple el requisito de nivel → detener análisis
         if not nivel.get("cumple_requisito", True):
             resultado["estado"] = "bloqueado_por_nivel"
             resultado["tiempo_total_ms"] = round((time.time() - tiempo_inicio) * 1000, 1)

@@ -99,9 +99,20 @@ def preprocess_document(image_bytes: bytes) -> Tuple[np.ndarray, dict]:
     return normalized, metadata
 
 
-def to_png_bytes(image: np.ndarray) -> bytes:
-    """Convierte una imagen procesada a bytes PNG para envío o visualización."""
-    success, buffer = cv2.imencode(".png", image)
+def to_png_bytes(image: np.ndarray, max_side: int = 2048, jpeg_quality: int = 88) -> bytes:
+    """
+    Convierte la imagen procesada a JPEG para envío a la API de visión.
+    Redimensiona si algún lado supera max_side para mantenerse bajo el límite de 10 MB de Claude.
+    JPEG calidad 88 preserva suficiente detalle para detectar manipulación sin inflar el tamaño.
+    """
+    h, w = image.shape[:2]
+    if max(h, w) > max_side:
+        scale = max_side / max(h, w)
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
+    success, buffer = cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, jpeg_quality])
     if not success:
         raise ValueError("Error al codificar la imagen procesada.")
     return buffer.tobytes()

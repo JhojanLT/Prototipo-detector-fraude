@@ -66,7 +66,7 @@ Responde ÚNICAMENTE en formato JSON válido, sin texto adicional:
                         "type": "image",
                         "source": {
                             "type": "base64",
-                            "media_type": "image/png",
+                            "media_type": "image/jpeg",
                             "data": img_b64,
                         },
                     },

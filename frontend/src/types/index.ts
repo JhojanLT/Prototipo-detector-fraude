@@ -1,10 +1,11 @@
 // Tipos del sistema de detección de fraude en títulos académicos v2
 
 export type NivelRiesgo = "bajo" | "medio" | "alto" | "bloqueado";
-export type EstadoProceso = "inicial" | "procesando" | "completado" | "bloqueado_por_nivel" | "error";
+export type EstadoProceso = "inicial" | "procesando" | "completado" | "bloqueado_por_nivel" | "bloqueado_por_tipo" | "error";
 export type ConfianzaNivel = "alta" | "media" | "baja";
 
 export interface Modulo0NivelAcademico {
+  es_diploma: boolean;
   cumple_requisito: boolean;
   nivel_detectado: string;
   titulo_detectado: string;
@@ -63,6 +64,7 @@ export interface ReporteFinal {
   recomendacion: string;
   requiere_revision_humana: boolean;
   bloqueado_por_nivel?: boolean;
+  bloqueado_por_tipo?: boolean;
   tiempo_ms?: number;
 }
 
