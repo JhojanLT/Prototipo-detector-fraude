@@ -166,11 +166,11 @@ TEXTO EXTRAÍDO POR OCR (puede estar fragmentado):
 {ocr_text}
 ---
 
-REGLAS IMPORTANTES:
-- Si el texto NO pertenece a un diploma, pon es_diploma=false y cumple_requisito=false
-- Si el texto es muy fragmentado y no es posible determinar si es un diploma, pon es_diploma=false con confianza baja
-- Solo pon es_diploma=true si hay evidencia clara (universidad, título otorgado, graduado, rector/decano, etc.)
-- Nunca asumas que es un diploma si el texto es genérico o ambiguo
+REGLAS CRÍTICAS — leer con atención:
+- Los diplomas colombianos usan fuentes caligráficas decorativas. El OCR produce texto muy fragmentado, con palabras cortadas o mezcladas. Esto es NORMAL y NO es razón para concluir que no es un diploma.
+- Pon es_diploma=false SOLO si el texto contiene evidencia CLARA de ser otro tipo de documento (número de cédula, fecha de nacimiento, ISBN, tabla de contenido, etc.).
+- Si el texto es fragmentado o ambiguo pero NO contiene evidencia de ser otro tipo de documento, pon es_diploma=true con confianza baja. Ante la duda, NO bloquear — el funcionario humano decide.
+- Para cumple_requisito: si no puedes determinar el nivel con certeza, pon true con confianza baja.
 
 Responde ÚNICAMENTE en formato JSON válido:
 {{
