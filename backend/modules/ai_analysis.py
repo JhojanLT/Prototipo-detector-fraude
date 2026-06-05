@@ -102,12 +102,14 @@ Analiza el contenido semántico del texto, no los errores de OCR. Busca:
 2. Inconsistencias SEMÁNTICAS graves: ej. una fecha imposible (año futuro), un programa que no existe, nombres de universidades inventadas
 3. Combinaciones ilógicas: ej. título de medicina otorgado por una universidad de ingeniería
 4. Si el texto tiene sentido como un diploma, aunque esté incompleto por limitaciones del OCR
+5. Inconsistencia de género en el nombre del graduado: si el nombre combina de forma inusual elementos claramente masculinos con elementos claramente femeninos (ej: "Jhojan Marcela" o "Luis María del Carmen Gómez Díaz" donde el primer nombre es inequívocamente masculino pero el segundo es inequívocamente femenino sin ser un nombre compuesto conocido). IMPORTANTE: esto es una señal DÉBIL — existen nombres compuestos válidos como "José María", "María José", "Juan de la Cruz", "Luz Marina", etc. Solo reporta si la combinación es claramente inusual y no corresponde a ningún nombre compuesto conocido en Colombia.
 
 NO reportes como anomalía:
 - Campos no identificados por mala calidad del OCR
 - Errores de escritura introducidos por el OCR
 - Texto fragmentado o incompleto
 - Ausencia de algunos elementos si el OCR no los pudo leer
+- Nombres compuestos válidos aunque mezclen géneros gramaticales (José María, María José, Luz Marina, etc.)
 
 TEXTO EXTRAÍDO POR OCR:
 ---
@@ -157,6 +159,9 @@ RIESGO MEDIO (confianza 40-69): cuando hay algunas señales ambiguas que podría
 RIESGO ALTO (confianza 0-39): ÚNICAMENTE cuando hay evidencia clara e inequívoca de manipulación digital: halos artificiales, inconsistencias de fuente dentro de campos de texto, diferencias drásticas de resolución entre zonas, o inconsistencias semánticas graves e inexplicables (fechas imposibles, universidades inexistentes).
 
 IMPORTANTE: La baja calidad de imagen, sellos difusos, firmas irregulares y OCR fragmentado son características NORMALES de diplomas físicos colombianos escaneados o fotografiados. Por sí solos NO justifican riesgo alto ni medio.
+
+SEÑALES DÉBILES — activan revisión humana pero NO elevan el nivel de riesgo por sí solas:
+- Inconsistencia de género en el nombre del graduado (ej: nombre masculino + nombre femenino de forma inusual). Esta señal es ambigua porque existen nombres compuestos válidos. Debe activar requiere_revision_humana=true pero NO cambiar el nivel de riesgo global a "alto" por sí sola.
 
 En caso de duda, prefiere riesgo bajo o medio sobre riesgo alto. Es mejor pedir verificación adicional que rechazar un título auténtico.
 
