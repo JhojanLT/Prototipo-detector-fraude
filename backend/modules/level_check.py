@@ -1,84 +1,35 @@
 """
 Módulo 0 — Validación de documento y nivel académico
-Primero verifica si el documento es un diploma/título académico.
-Si lo es, verifica que corresponda a un pregrado universitario,
+Primero verifica VISUALMENTE si el documento es un diploma/título académico,
+usando la imagen directamente (no depende del OCR).
+Si es diploma, verifica que corresponda a un pregrado universitario,
 requisito mínimo para admisión a posgrado en Colombia (Ley 30 de 1992,
 Decreto 1330 de 2019).
-
-Niveles en Colombia:
-  - Técnico profesional (2 años) → NO cumple
-  - Tecnología (3 años)          → NO cumple
-  - Pregrado universitario (4-5 años) → SÍ cumple
-  - Especialización / Maestría / Doctorado → SÍ cumple (ya tiene pregrado)
 """
 
+import base64
 import json
 from anthropic import Anthropic
 
 client = Anthropic()
-MODEL = "claude-sonnet-4-20250514"
+MODEL = "claude-sonnet-4-6"
 
-# Palabras clave que confirman que es un diploma
-KEYWORDS_DIPLOMA = [
-    "título de", "titulo de",
-    "grado de", "otorga el grado",
-    "conferido el grado", "confiere el título",
-    "ha culminado satisfactoriamente",
-    "cumplido los requisitos",
-    "acredita que",
-    "universidad", "facultad", "escuela superior",
-    "ingeniero", "ingeniera",
-    "abogado", "abogada",
-    "médico", "médica", "medico", "medica",
-    "enfermero", "enfermera",
-    "psicólogo", "psicóloga", "psicologo", "psicologa",
-    "administrador", "administradora",
-    "contador", "contadora",
-    "economista",
-    "arquitecto", "arquitecta",
-    "licenciado", "licenciada",
-    "químico", "química", "quimico", "quimica",
-    "biólogo", "bióloga", "biologo", "biologa",
-    "fisioterapeuta",
-    "odontólogo", "odontóloga", "odontologo", "odontologa",
-    "nutricionista",
-    "bacteriólogo", "bacterióloga",
-    "trabajador social", "trabajadora social",
-    "comunicador", "comunicadora",
-    "diseñador", "diseñadora",
-    "filósofo", "filósofa",
-    "historiador", "historiadora",
-    "geólogo", "geóloga",
-    "título universitario", "titulo universitario",
-    "pregrado", "especialista", "magíster", "magister",
-    "tecnólogo", "tecnóloga", "tecnologo", "tecnologa",
-    "técnico profesional", "tecnico profesional",
-    "técnico en", "tecnico en",
-    "rector", "decano", "secretaria general",
-    "acta de grado", "resolución de grado",
-]
-
-# Palabras que indican claramente que NO es un diploma
+# Palabras que indican claramente que NO es un diploma (señales fuertes en el OCR)
 KEYWORDS_NO_DIPLOMA = [
     "cédula de ciudadanía", "cedula de ciudadania",
     "tarjeta de identidad",
-    "pasaporte",
     "número de identificación", "numero de identificacion",
     "registro civil",
     "fecha de nacimiento",
     "lugar de nacimiento",
-    "firma del titular",
     "registraduría", "registraduria",
-    "república de colombia",  # aparece en cédulas, no en diplomas
     "tabla de contenido",
-    "índice", "capítulo", "chapter",
-    "isbn", "editorial",
-    "prólogo", "introducción al libro",
+    "isbn",
     "derechos reservados", "todos los derechos",
     "impreso en",
 ]
 
-# Palabras que indican nivel NO universitario (para la segunda verificación)
+# Palabras que indican nivel NO universitario
 KEYWORDS_NO_PREGRADO = [
     "tecnólogo", "tecnóloga", "tecnologo", "tecnologa",
     "tecnología en", "tecnologia en",
@@ -90,128 +41,114 @@ KEYWORDS_NO_PREGRADO = [
 ]
 
 
-def _check_keywords(text: str) -> tuple[str | None, str | None]:
-    """
-    Verificación rápida por palabras clave.
-    Devuelve (resultado_diploma, resultado_nivel):
-      - resultado_diploma: 'es_diploma' | 'no_es_diploma' | None
-      - resultado_nivel: 'cumple' | 'no_cumple' | None
-    """
+def _keywords_no_diploma(text: str) -> bool:
+    """Retorna True si el texto contiene señales inequívocas de no ser un diploma."""
     text_lower = text.lower()
-
-    # Detectar documentos claramente NO diploma
-    for kw in KEYWORDS_NO_DIPLOMA:
-        if kw in text_lower:
-            return ("no_es_diploma", None)
-
-    # Detectar si hay indicios de que es un diploma
-    es_diploma = any(kw in text_lower for kw in KEYWORDS_DIPLOMA)
-    resultado_diploma = "es_diploma" if es_diploma else None
-
-    # Detectar nivel académico si hay indicios de diploma
-    resultado_nivel = None
-    if es_diploma:
-        for kw in KEYWORDS_NO_PREGRADO:
-            if kw in text_lower:
-                resultado_nivel = "no_cumple"
-                break
-        else:
-            resultado_nivel = "cumple"
-
-    return (resultado_diploma, resultado_nivel)
+    return any(kw in text_lower for kw in KEYWORDS_NO_DIPLOMA)
 
 
-def validate_academic_level(ocr_text: str) -> dict:
+def _keywords_no_pregrado(text: str) -> bool:
+    """Retorna True si el texto contiene señales de nivel técnico/tecnólogo."""
+    text_lower = text.lower()
+    return any(kw in text_lower for kw in KEYWORDS_NO_PREGRADO)
+
+
+def validate_academic_level(ocr_text: str, image_bytes: bytes) -> dict:
     """
     Módulo 0 — Validación de documento y nivel académico.
-    Primero verifica si el documento es un diploma.
-    Si lo es, verifica si cumple el requisito de nivel universitario.
+    Usa la imagen directamente para determinar si es un diploma, sin depender
+    únicamente del OCR (que falla con fuentes decorativas de diplomas colombianos).
 
-    Devuelve un dict con:
-    - es_diploma: bool
-    - cumple_requisito: bool
-    - nivel_detectado: str
-    - titulo_detectado: str
-    - programa_detectado: str
-    - razon: str
-    - confianza: str (alta|media|baja)
+    Args:
+        ocr_text: Texto extraído por Tesseract (puede estar fragmentado)
+        image_bytes: Bytes de la imagen procesada (JPEG) para análisis visual
+
+    Retorna dict con:
+        es_diploma, cumple_requisito, nivel_detectado, titulo_detectado,
+        programa_detectado, razon, confianza
     """
-    resultado_diploma_kw, resultado_nivel_kw = _check_keywords(ocr_text)
+    # Señal fuerte por keywords: si el texto dice explícitamente que es otro documento
+    if _keywords_no_diploma(ocr_text):
+        return {
+            "es_diploma": False,
+            "cumple_requisito": False,
+            "nivel_detectado": "no aplica",
+            "titulo_detectado": "no aplica",
+            "programa_detectado": "no aplica",
+            "razon": "El texto extraído contiene indicadores claros de que no es un diploma (cédula, libro u otro documento).",
+            "confianza": "alta",
+        }
 
-    # Si por keywords es claramente NO diploma, igual consultamos la IA para confirmación
-    # pero ya tenemos una señal fuerte. Si el texto es muy corto, vamos directo a IA.
+    # Análisis visual con la imagen — más confiable que solo el OCR
+    img_b64 = base64.standard_b64encode(image_bytes).decode("utf-8")
 
-    prompt = f"""Eres un experto en documentos académicos colombianos. Debes analizar el siguiente texto extraído por OCR y determinar DOS cosas:
+    prompt = f"""Eres un experto en documentos académicos colombianos. Analiza esta imagen y el texto OCR adjunto para determinar:
 
-1. ¿ES este documento un diploma o título académico?
-2. Si es diploma, ¿cumple el nivel mínimo para posgrado en Colombia?
+1. ¿ES este documento un diploma o título académico universitario?
+2. Si es diploma, ¿qué nivel académico otorga y cumple el requisito mínimo de pregrado para posgrado en Colombia?
 
-TIPOS DE DOCUMENTOS QUE NO SON DIPLOMAS (ejemplos):
-- Cédulas de ciudadanía o documentos de identidad
-- Pasaportes
-- Libros, artículos o publicaciones
-- Contratos, actas de reunión, certificados laborales
-- Recibos, facturas, formularios
-- Constancias de estudio (sin otorgar título)
-- Cualquier otro documento que no sea un diploma/título académico
-
-SISTEMA DE NIVELES EN COLOMBIA (solo aplica si ES diploma):
-- Técnico profesional (2 años): NO cumple requisito de posgrado
-- Tecnólogo / Tecnología (3 años): NO cumple requisito de posgrado
-- Pregrado universitario / Profesional (4-5 años): SÍ cumple
+SISTEMA DE NIVELES EN COLOMBIA (Ley 30 de 1992):
+- Técnico profesional: NO cumple
+- Tecnólogo / Tecnología: NO cumple
+- Pregrado universitario / Profesional: SÍ cumple
 - Especialización, Maestría, Doctorado: SÍ cumple
 
-TEXTO EXTRAÍDO POR OCR (puede estar fragmentado):
+TEXTO OCR EXTRAÍDO (puede estar fragmentado por fuentes decorativas — es normal en diplomas colombianos):
 ---
-{ocr_text}
+{ocr_text if ocr_text.strip() else "(sin texto legible por OCR)"}
 ---
 
-REGLAS CRÍTICAS — leer con atención:
-- Los diplomas colombianos usan fuentes caligráficas decorativas. El OCR produce texto muy fragmentado, con palabras cortadas o mezcladas. Esto es NORMAL y NO es razón para concluir que no es un diploma.
-- Pon es_diploma=false SOLO si el texto contiene evidencia CLARA de ser otro tipo de documento (número de cédula, fecha de nacimiento, ISBN, tabla de contenido, etc.).
-- Si el texto es fragmentado o ambiguo pero NO contiene evidencia de ser otro tipo de documento, pon es_diploma=true con confianza baja. Ante la duda, NO bloquear — el funcionario humano decide.
-- Para cumple_requisito: si no puedes determinar el nivel con certeza, pon true con confianza baja.
+INSTRUCCIONES:
+- Analiza PRINCIPALMENTE la imagen. Los diplomas colombianos tienen: membrete institucional, sello, firmas de rector/decano, nombre del graduado, título otorgado, fecha.
+- El OCR fragmentado NO es razón para decir que no es diploma. Los diplomas usan fuentes caligráficas que el OCR lee mal.
+- Marca es_diploma=false SOLO si la imagen claramente NO es un diploma (cédula, pasaporte, libro, contrato, etc.).
+- Si hay duda razonable de que podría ser un diploma (imagen borrosa, recortada, etc.), marca es_diploma=true con confianza baja.
+- Para el nivel: si no puedes determinarlo con certeza, pon cumple_requisito=true con confianza baja.
 
-Responde ÚNICAMENTE en formato JSON válido:
+Responde ÚNICAMENTE en formato JSON:
 {{
   "es_diploma": true|false,
   "cumple_requisito": true|false,
   "nivel_detectado": "técnico profesional|tecnólogo|pregrado universitario|especialización|maestría|doctorado|no aplica|no identificado",
-  "titulo_detectado": "título exacto o 'no aplica' si no es diploma o 'no identificado'",
-  "programa_detectado": "nombre del programa o 'no aplica' si no es diploma o 'no identificado'",
-  "razon": "explicación en 1-2 oraciones de por qué es o no es diploma y si cumple el requisito",
+  "titulo_detectado": "título otorgado o 'no identificado'",
+  "programa_detectado": "nombre del programa o 'no identificado'",
+  "razon": "explicación breve de la decisión en 1-2 oraciones",
   "confianza": "alta|media|baja"
 }}"""
 
     message = client.messages.create(
         model=MODEL,
         max_tokens=800,
-        messages=[{"role": "user", "content": prompt}],
+        messages=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "image",
+                        "source": {
+                            "type": "base64",
+                            "media_type": "image/jpeg",
+                            "data": img_b64,
+                        },
+                    },
+                    {"type": "text", "text": prompt},
+                ],
+            }
+        ],
     )
 
     result = _parse_json(message.content[0].text)
 
-    # Doble verificación con keywords:
-    # Si la IA dice que ES diploma pero keywords detectaron NO diploma → bloquear
-    if result.get("es_diploma") and resultado_diploma_kw == "no_es_diploma":
-        result["es_diploma"] = False
+    # Doble verificación: si la IA dice que cumple nivel pero hay keyword de técnico/tecnólogo
+    if result.get("cumple_requisito") and _keywords_no_pregrado(ocr_text):
         result["cumple_requisito"] = False
         result["confianza"] = "media"
         result["razon"] = (
-            "Se detectaron indicadores de documento no académico (cédula, libro u otro). "
+            "Se detectaron términos de nivel tecnológico o técnico en el texto. "
             + result.get("razon", "")
         )
 
-    # Si la IA dice que cumple nivel pero keywords detectaron nivel técnico → bloquear
-    if result.get("cumple_requisito") and resultado_nivel_kw == "no_cumple":
-        result["cumple_requisito"] = False
-        result["confianza"] = "media"
-        result["razon"] = (
-            "Se detectaron términos asociados a nivel tecnológico o técnico. "
-            + result.get("razon", "")
-        )
-
-    # Garantizar coherencia: si no es diploma, no puede cumplir requisito
+    # Coherencia: si no es diploma, no puede cumplir requisito
     if not result.get("es_diploma", True):
         result["cumple_requisito"] = False
 
@@ -231,14 +168,17 @@ def _parse_json(text: str) -> dict:
         start = text.find("{")
         end = text.rfind("}")
         if start != -1 and end != -1:
-            return json.loads(text[start : end + 1])
-        # Fallback seguro: ante error de parseo, no bloquear — funcionario decide
+            try:
+                return json.loads(text[start: end + 1])
+            except json.JSONDecodeError:
+                pass
+        # Fallback: ante error de parseo, no bloquear
         return {
             "es_diploma": True,
             "cumple_requisito": True,
             "nivel_detectado": "no identificado",
             "titulo_detectado": "no identificado",
             "programa_detectado": "no identificado",
-            "razon": "No fue posible analizar el documento por limitaciones del texto extraído. El funcionario debe verificar manualmente.",
+            "razon": "No fue posible analizar el documento. El funcionario debe verificar manualmente.",
             "confianza": "baja",
         }

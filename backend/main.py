@@ -109,9 +109,9 @@ async def analizar_titulo(archivo: UploadFile = File(...)):
         meta_ocr["texto_extraido"] = texto_extraido
         resultado["modulos"]["modulo_3_ocr"] = meta_ocr
 
-        # ── MÓDULO 0: Validación de nivel académico ──────────────────
+        # ── MÓDULO 0: Validación de documento y nivel académico ─────
         t0 = time.time()
-        nivel = level_check.validate_academic_level(texto_extraido)
+        nivel = level_check.validate_academic_level(texto_extraido, png_procesado)
         nivel["tiempo_ms"] = round((time.time() - t0) * 1000, 1)
         resultado["modulos"]["modulo_0_nivel_academico"] = nivel
 
